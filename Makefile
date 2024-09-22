@@ -33,9 +33,10 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
-# Transfert automatique vers le Raspberry Pi avec scp
+# Transfert, arrêt du programme en cours, et exécution du nouveau programme
 deploy:
 	scp $(TARGET) $(USER)@$(HOST):$(DESTINATION)
+	ssh $(USER)@$(HOST) 'pkill -f my_program || true; cd $(DESTINATION) && nohup ./my_program > my_program.log 2>&1 &'
 
 # Règle pour nettoyer les fichiers compilés
 clean:
