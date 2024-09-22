@@ -11,17 +11,12 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/NetworkComm.o
 # Nom de l'exécutable
 TARGET = $(BIN_DIR)/my_program
 
-# Paramètres du Raspberry Pi
-USER = pi
-HOST = 192.168.1.59
-DESTINATION = /home/pi/projet-raspberry/bin
-
 # Options du compilateur
 CXX = g++
 CXXFLAGS = -I$(INC_DIR) -pthread
 
 # Règle par défaut
-all: $(TARGET) deploy
+all: $(TARGET)
 
 # Règle pour créer l'exécutable
 $(TARGET): $(OBJS)
@@ -32,11 +27,6 @@ $(TARGET): $(OBJS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
-
-# Transfert, arrêt du programme en cours, et exécution du nouveau programme
-deploy:
-	scp $(TARGET) $(USER)@$(HOST):$(DESTINATION)
-	ssh $(USER)@$(HOST) 'pkill -f my_program || true; cd $(DESTINATION) && nohup ./my_program > my_program.log 2>&1 &'
 
 # Règle pour nettoyer les fichiers compilés
 clean:
