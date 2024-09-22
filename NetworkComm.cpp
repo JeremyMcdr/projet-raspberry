@@ -7,7 +7,7 @@
 #include <cstring>
 #include <iostream>
 
-// Fonction pour obtenir l'adresse IP locale (non localhost)
+// Fonction pgour obtenir l'adresse IP locale (non localhost)
 std::string getLocalIP() {
     struct ifaddrs *ifap, *ifa;
     struct sockaddr_in *sa;
