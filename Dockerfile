@@ -19,6 +19,7 @@ RUN g++ -std=c++17 -I/app/include -o server /app/src/main.cpp /app/src/NetworkCo
 
 # Exposer le port sur lequel votre application écoute
 EXPOSE 8080
+EXPOSE 9090
 
 # Commande pour exécuter le programme
 CMD ["./server"]

@@ -72,7 +72,13 @@ void listenForDiscovery() {
             std::cout << "Serveur en attente de messages de découverte..." << std::endl;
         }
 
-        while (true) {
+        while (serverRunning) { // Ajout de la condition d'arrêt
+            // Configurer un timeout pour recvfrom
+            struct timeval tv;
+            tv.tv_sec = 1; // Timeout de 1 seconde
+            tv.tv_usec = 0;
+            setsockopt(discovery_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
             // Recevoir un message de découverte
             int n = recvfrom(discovery_socket, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &addr_len);
             if (n > 0) {
@@ -91,12 +97,13 @@ void listenForDiscovery() {
             }
         }
 
-        close(discovery_socket);
+        close(discovery_socket);  // Fermer le socket proprement
     } catch (const std::exception& e) {
         std::lock_guard<std::mutex> lock(consoleMutex);
         std::cerr << "Erreur dans listenForDiscovery : " << e.what() << std::endl;
     }
 }
+
 
 // Constructeur pour initialiser le serveur
 NetworkComm::NetworkComm(int port) : server_fd(-1) {
@@ -136,16 +143,22 @@ NetworkComm::NetworkComm() : server_fd(-1) {}
 
 // Accepter les connexions client
 int NetworkComm::acceptClient() {
+    struct timeval tv;
+    tv.tv_sec = 1; // Timeout de 1 seconde
+    tv.tv_usec = 0;
+    setsockopt(server_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
     int client_socket = accept(server_fd, nullptr, nullptr);
-    if (client_socket < 0) {
+    if (client_socket < 0 && errno != EWOULDBLOCK) {
         std::lock_guard<std::mutex> lock(consoleMutex);
         std::cerr << "Erreur lors de l'acceptation de la connexion." << std::endl;
-    } else {
+    } else if (client_socket >= 0) {
         std::lock_guard<std::mutex> lock(consoleMutex);
         std::cout << "Client connecté." << std::endl;
     }
     return client_socket;
 }
+
 
 // Envoyer un message au client
 void NetworkComm::sendMessage(int client_socket, const std::string &message) {
