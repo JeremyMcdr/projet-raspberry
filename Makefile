@@ -13,7 +13,10 @@ TARGET = $(BIN_DIR)/my_program
 
 # Options du compilateur
 CXX = g++
-CXXFLAGS = -I$(INC_DIR) -pthread
+CXXFLAGS = -I$(INC_DIR) -I/usr/include/websocketpp -pthread
+
+# Options de l'éditeur de liens
+LDFLAGS = -lboost_system -lboost_thread
 
 # Règle par défaut
 all: $(TARGET)
@@ -21,7 +24,7 @@ all: $(TARGET)
 # Règle pour créer l'exécutable
 $(TARGET): $(OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS)
+	$(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS) $(LDFLAGS)
 
 # Règle pour compiler les fichiers source en fichiers objets dans build/
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
