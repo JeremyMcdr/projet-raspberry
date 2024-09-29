@@ -30,9 +30,12 @@ void WebSocketServer::run(uint16_t port) {
 
 void WebSocketServer::stop() {
     m_server.stop_listening();
+
     std::lock_guard<std::mutex> guard(m_connection_lock);
     for (auto hdl : m_connections) {
         m_server.close(hdl, websocketpp::close::status::going_away, "");
+        //Pause pour laisser le temps à chaque connexion de se fermer proprement 
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  
     }
     m_server.stop();
 
@@ -152,6 +155,8 @@ void WebSocketServer::listenForDiscovery() {
                 // Répondre au client avec l'adresse IP
                 sendto(discovery_socket, localIP.c_str(), localIP.size(), 0, (struct sockaddr *)&client_addr, addr_len);
                 std::cout << "Réponse envoyée avec l'IP : " << localIP << std::endl;
+            } else if (n==-1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                std::cerr << "Erreur de réception: " << strerror(errno) << std::endl;
             }
         }
 

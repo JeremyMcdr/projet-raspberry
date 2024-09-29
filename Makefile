@@ -1,36 +1,28 @@
-# Définir les répertoires
-SRC_DIR = src
-INC_DIR = include
-BIN_DIR = bin
-BUILD_DIR = build
-
-# Définir les fichiers source et les fichiers objets
-SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/NetworkComm.cpp
-OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/NetworkComm.o
-
-# Nom de l'exécutable
-TARGET = $(BIN_DIR)/my_program
-
-# Options du compilateur
+# Définitions du compilateur et des options
 CXX = g++
-CXXFLAGS = -I$(INC_DIR) -I/usr/include/websocketpp -pthread
+INC_DIR = include
+CXXFLAGS = -I$(INC_DIR) -I/usr/include/websocketpp -pthread -lboost_system -lboost_thread
 
-# Options de l'éditeur de liens
-LDFLAGS = -lboost_system -lboost_thread
+# Liste des fichiers source
+SRC = src/main.cpp src/App.cpp src/XBeeManager.cpp src/NetworkComm.cpp
 
-# Règle par défaut
+# Générer une liste de fichiers objets correspondants
+OBJ = $(SRC:.cpp=.o)
+
+# Nom de l'exécutable final
+TARGET = bin/my_program
+
+# Règle principale
 all: $(TARGET)
 
-# Règle pour créer l'exécutable
-$(TARGET): $(OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS) $(LDFLAGS)
+# Règle pour créer l'exécutable en liant tous les fichiers objets
+$(TARGET): $(OBJ)
+	$(CXX) $(OBJ) -o $(TARGET) $(CXXFLAGS)
 
-# Règle pour compiler les fichiers source en fichiers objets dans build/
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(BUILD_DIR)
+# Règle pour compiler les fichiers objets
+%.o: %.cpp
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
-# Règle pour nettoyer les fichiers compilés
+# Nettoyage des fichiers objets et de l'exécutable
 clean:
-	@rm -rf $(BUILD_DIR)/*.o $(BIN_DIR)/*
+	rm -f $(OBJ) $(TARGET)

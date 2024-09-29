@@ -1,8 +1,10 @@
-#include "NetworkComm.h"
 #include <csignal>
 #include <thread>
 #include <chrono>
 #include <iostream>
+
+#include "NetworkComm.h"
+#include "App.h"
 
 volatile bool serverRunning = true;
 
@@ -12,6 +14,33 @@ void signalHandler(int signum) {
 }
 
 int main() {
+
+    // Créer une instance de l'application
+    App app;
+
+    // Initialiser l'application
+    if (!app.Init()) {
+        std::cerr << "Erreur lors de l'initialisation de l'application." << std::endl;
+        return 1; // Quitter avec une erreur
+    }
+    std::cout << "Application initialisée avec succés." << std::endl;
+
+    // Exécuter l'application
+    if (!app.Run()) {
+
+        std::cerr << "Erreur lors de l'exécution de l'application." << std::endl;
+        return 1; // Quitter avec une erreur
+    }
+    std::cout << "Application exécutée avec succés." << std::endl;
+
+    // Quitter l'application
+    app.Quit();
+
+
+    /**************************************************** 
+    A déplacer par jérémy
+    ****************************************************
+
     // Gérer les signaux pour fermer proprement le serveur
     std::signal(SIGINT, signalHandler);
 
@@ -28,11 +57,16 @@ int main() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
+
     // Arrêter le serveur proprement
     ws_server.stop();
     if (server_thread.joinable()) {
         server_thread.join();
     }
 
-    return 0;
+    **************************************************** 
+    A déplacer par jérémy
+    ****************************************************/
+
+    return true;
 }
