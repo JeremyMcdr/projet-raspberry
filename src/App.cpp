@@ -1,15 +1,14 @@
+// App.cpp
 #include "App.h"
+#include <cstdlib>  // Pour getenv
 
-
-App::App() {
+App::App() : ws_server(xb_manager) { // Initialiser ws_server avec xb_manager
     // Construction de l'objet App
 }
 
 App::~App() {
     // Ajoutez ici toute désinitialisation nécessaire
 }
-
-
 
 // Méthode pour initialiser l'application (gestion des signaux, etc.)
 bool App::Init(){
@@ -18,36 +17,31 @@ bool App::Init(){
     if(xb_manager.InitXBee()){
         std::cout << "[LOG] XBee initialisé "  << std::endl;
     }
-    else{
+    else {
+        std::cerr << "Erreur lors de l'initialisation du XBeeManager" << std::endl;
         return false;
     }
 
     state = ProgramState::RUNNING;
     
-   return true;
+    return true;
 }
 
 // Méthode pour démarrer et exécuter l'application (serveur WebSocket)
 bool App::Run(){
-    std::cout << "[LOG] RUn "  << std::endl;
+    std::cout << "[LOG] Run "  << std::endl;
 
+    // Lancer le serveur WebSocket dans un thread séparé
+    std::thread ws_thread(&WebSocketServer::run, &ws_server, 8080);
     
-
-    
-
     while(state == ProgramState::RUNNING){
-
-        XBeeMessage message;
-
-        
-    
-        fill_message(message);
-
-
-        xb_manager.send_xbee_message(message);
-
+        // Votre code ici, par exemple gérer les événements ou surveiller l'état
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    // Arrêter le serveur WebSocket
+    ws_server.stop();
+    ws_thread.join();
 
     return true;
 }
@@ -61,6 +55,7 @@ void App::Quit(){
 bool App::PollXBeeEvent(){
     return true;
 }
+
 /*
 *
 *   a modifier par la suite

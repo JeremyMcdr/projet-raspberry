@@ -1,28 +1,38 @@
-# Définitions du compilateur et des options
+# Makefile
+
+# Variables du compilateur
 CXX = g++
-INC_DIR = include
-CXXFLAGS = -I$(INC_DIR) -I/usr/include/websocketpp -pthread -lboost_system -lboost_thread
+CXXFLAGS = -std=c++11 -O2 -pthread
+INCLUDES = -I./include
+LIBS = -lboost_system -lboost_thread -lpthread
 
-# Liste des fichiers source
-SRC = src/main.cpp src/App.cpp src/XBeeManager.cpp src/NetworkComm.cpp
+# Répertoires
+SRCDIR = src
+INCDIR = include
+BUILDDIR = build
 
-# Générer une liste de fichiers objets correspondants
-OBJ = $(SRC:.cpp=.o)
+# Fichiers sources et objets
+SRC = $(wildcard $(SRCDIR)/*.cpp)
+OBJ = $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(SRC))
 
-# Nom de l'exécutable final
-TARGET = bin/my_program
+# Nom de l'exécutable
+TARGET = domotique
 
-# Règle principale
+# Règles par défaut
 all: $(TARGET)
 
-# Règle pour créer l'exécutable en liant tous les fichiers objets
+# Règle de linkage
 $(TARGET): $(OBJ)
-	$(CXX) $(OBJ) -o $(TARGET) $(CXXFLAGS)
+	@mkdir -p $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(TARGET) $(LIBS)
 
-# Règle pour compiler les fichiers objets
-%.o: %.cpp
-	$(CXX) -c $< -o $@ $(CXXFLAGS)
+# Règle de compilation des fichiers objets
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+	@mkdir -p $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Nettoyage des fichiers objets et de l'exécutable
+# Règle de nettoyage
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -rf $(BUILDDIR) $(TARGET)
+
+.PHONY: all clean

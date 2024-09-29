@@ -25,8 +25,10 @@ COPY ./Makefile /app/
 RUN make
 
 # Exposer les ports sur lesquels votre application écoute
-EXPOSE 8080
-EXPOSE 9090
+EXPOSE 8080 9090
+
+# Définir la variable d'environnement pour le mode test (par défaut désactivé)
+ENV TESTING_MODE=true
 
 # Commande pour exécuter le programme
-CMD ["./bin/my_program"]
+CMD ["./domotique"]

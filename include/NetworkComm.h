@@ -3,6 +3,7 @@
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
+#include "XBeeManager.h"
 
 #include <set>
 #include <mutex>
@@ -17,6 +18,7 @@ public:
     WebSocketServer();
     void run(uint16_t port);
     void stop();
+    WebSocketServer(XBeeManager& xbee_manager);
 
     // Fonction pour démarrer l'écoute de découverte
     void startDiscoveryListener();
@@ -26,7 +28,8 @@ private:
     void on_open(websocketpp::connection_hdl hdl);
     void on_close(websocketpp::connection_hdl hdl);
     void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg);
-
+    
+    XBeeManager& m_xbee_manager;
     // Fonction pour écouter les messages de découverte
     void listenForDiscovery();
 

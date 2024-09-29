@@ -59,7 +59,8 @@ public:
 
     void send_xbee_message(XBeeMessage& message);
 
-
+    // Méthode pour activer le mode test
+    void setTestingMode(bool mode);
 
 private:
     // Méthode interne pour ouvrir le port série
@@ -74,7 +75,8 @@ private:
     std::string portName;     // Le nom du port série (codé en dur)
     int serialPortFd;         // Descripteur de fichier pour le port série
 
-
+    // Mode test
+    bool testing_mode = false;
 };
 
 #endif // XBEEMANAGER_H
