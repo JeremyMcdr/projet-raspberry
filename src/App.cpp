@@ -62,7 +62,6 @@ bool App::PollXBeeEvent(){
 *
 *
 */
-
 // Fonction pour demander à l'utilisateur de remplir un message
 void App::fill_message(XBeeMessage& message) {
     std::string mac_str;

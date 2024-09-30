@@ -8,6 +8,8 @@
 #include <arpa/inet.h>                 // Pour les fonctions de conversion d'adresses
 #include <unistd.h>                    // Pour les fonctions POSIX (comme close)
 #include <sys/socket.h>                // Pour les sockets
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 // Constructeur de la classe WebSocketServer
 WebSocketServer::WebSocketServer(XBeeManager& xbee_manager)
@@ -72,47 +74,86 @@ void WebSocketServer::on_close(websocketpp::connection_hdl hdl) {
 
 // Gestionnaire de réception de messages WebSocket
 void WebSocketServer::on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-    std::string message = msg->get_payload();  // Extraction du message reçu
+    std::string message = msg->get_payload();
     std::cout << "Message reçu: " << message << std::endl;
 
-    XBeeMessage xbee_message;
-    memset(&xbee_message, 0, sizeof(XBeeMessage)); // Initialisation du message XBee à zéro
+    try {
+        auto json_msg = json::parse(message);
+        std::string action = json_msg["action"];
+        auto params = json_msg["parameters"];
 
-    if (message == "Bouton 1 Appuyé") {
-        std::cout << "Action pour le Bouton 1" << std::endl;
+        if (action == "toggle_light") {
+            std::string module_id = params["module_id"];
+            std::string state = params["state"];
 
-        // Remplissage de l'adresse MAC du module Arduino cible
-        uint8_t mac_address[8] = { /* Remplissez avec l'adresse MAC de l'Arduino */ };
-        memcpy(xbee_message.mac_address, mac_address, 8);
+            // Convertir l'état en code approprié
+            uint16_t address = get_address_from_module_id(module_id);
+            uint16_t data = (state == "on") ? 0x01 : 0x00;
 
-        xbee_message.address = 0x0001; // Adresse courte si nécessaire
-        xbee_message.data = 0x01;       // Commande pour allumer la lumière
+            XBeeMessage xbee_message;
+            memset(&xbee_message, 0, sizeof(XBeeMessage));
+            
+            // Récupérer l'adresse MAC dynamique basée sur le module_id
+            if (!get_mac_address_from_module_id(module_id, xbee_message.mac_address)) {
+                m_server.send(hdl, "Module ID invalide.", websocketpp::frame::opcode::text);
+                return;
+            }
 
-        // Envoi du message via XBee
-        m_xbee_manager.send_xbee_message(xbee_message);
+            xbee_message.address = address;
+            xbee_message.data = data;
 
-    } else if (message == "Bouton 2 Appuyé") {
-        std::cout << "Action pour le Bouton 2" << std::endl;
-
-        // Remplissage de l'adresse MAC du module Arduino cible
-        uint8_t mac_address[8] = { /* Remplissez avec l'adresse MAC de l'Arduino */ };
-        memcpy(xbee_message.mac_address, mac_address, 8);
-
-        xbee_message.address = 0x0001;
-        xbee_message.data = 0x00;       // Commande pour éteindre la lumière
-
-        // Envoi du message via XBee
-        m_xbee_manager.send_xbee_message(xbee_message);
-
-    } else {
-        std::cout << "Message inconnu." << std::endl;
-        // Envoi d'une réponse au client indiquant que la commande est inconnue
-        m_server.send(hdl, "Commande inconnue.", websocketpp::frame::opcode::text);
-        return; // Arrêt du traitement si le message est inconnu
+            // Calcul de la parité est déjà géré dans send_xbee_message
+            m_xbee_manager.send_xbee_message(xbee_message);
+            m_server.send(hdl, "Commande exécutée.", websocketpp::frame::opcode::text);
+        }
+        // Ajoutez d'autres actions ici
+        else {
+            m_server.send(hdl, "Action inconnue.", websocketpp::frame::opcode::text);
+        }
     }
+    catch (json::parse_error& e) {
+        std::cerr << "Erreur de parsing JSON: " << e.what() << std::endl;
+        m_server.send(hdl, "Format de message invalide.", websocketpp::frame::opcode::text);
+    }
+    catch (std::exception& e) {
+        std::cerr << "Erreur: " << e.what() << std::endl;
+        m_server.send(hdl, "Erreur serveur.", websocketpp::frame::opcode::text);
+    }
+}
 
-    // Envoi d'une réponse au client confirmant l'exécution de la commande
-    m_server.send(hdl, "Commande exécutée.", websocketpp::frame::opcode::text);
+// Définition de la méthode pour obtenir l'adresse courte XBee basée sur le module_id
+uint16_t WebSocketServer::get_address_from_module_id(const std::string& module_id) {
+    // Implémentez la logique pour convertir module_id en adresse courte XBee
+    // Cela pourrait impliquer une table de correspondance ou une autre méthode
+    if (module_id == "module_1") {
+        return 0x0001;
+    }
+    else if (module_id == "module_2") {
+        return 0x0002;
+    }
+    // Ajoutez d'autres modules si nécessaire
+    else {
+        return 0xFFFF; // Adresse invalide
+    }
+}
+
+// Définition de la méthode pour obtenir l'adresse MAC basée sur le module_id
+bool WebSocketServer::get_mac_address_from_module_id(const std::string& module_id, uint8_t* mac_address) {
+    // Implémentez la logique pour obtenir l'adresse MAC basée sur le module_id
+    if (module_id == "module_1") {
+        uint8_t mac[] = {0x00, 0x13, 0xA2, 0x00, 0x40, 0x52, 0x3A, 0x4B};
+        memcpy(mac_address, mac, 8);
+        return true;
+    }
+    else if (module_id == "module_2") {
+        uint8_t mac[] = {0x00, 0x13, 0xA2, 0x00, 0x40, 0x52, 0x3A, 0x4C};
+        memcpy(mac_address, mac, 8);
+        return true;
+    }
+    // Ajoutez d'autres modules si nécessaire
+    else {
+        return false;
+    }
 }
 
 // Méthode pour démarrer le thread de découverte UDP

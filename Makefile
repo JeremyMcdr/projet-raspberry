@@ -2,7 +2,7 @@
 
 # Variables du compilateur
 CXX = g++
-CXXFLAGS = -std=c++11 -O2 -pthread
+CXXFLAGS = -std=c++17 -O2 -Wall -pthread  # Mise à jour vers C++17 et ajout de l'option -Wall pour les warnings
 INCLUDES = -I./include
 LIBS = -lboost_system -lboost_thread -lpthread
 
